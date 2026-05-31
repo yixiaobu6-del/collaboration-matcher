@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合作匹配器 - 增强版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
+    <nav class="bg-purple-700 text-white p-4 shadow-lg">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <h1 class="text-xl font-bold"><i class="fa fa-handshake-o mr-2"></i>合作匹配器</h1>
+            <div class="space-x-4 text-sm">
+                <button onclick="showTab('input')" class="tab-btn px-3 py-1 rounded bg-purple-500">需求输入</button>
+                <button onclick="showTab('match')" class="tab-btn px-3 py-1 rounded hover:bg-purple-500">匹配结果</button>
+                <button onclick="showTab('experts')" class="tab-btn px-3 py-1 rounded hover:bg-purple-500">专家库</button>
+                <button onclick="showTab('templates')" class="tab-btn px-3 py-1 rounded hover:bg-purple-500">模板库</button>
+                <button onclick="showTab('history')" class="tab-btn px-3 py-1 rounded hover:bg-purple-500">匹配历史</button>
+                <button onclick="showTab('feedback')" class="tab-btn px-3 py-1 rounded hover:bg-purple-500">评价反馈</button>
+            </div>
+        </div>
+    </nav>
+    <div class="max-w-4xl mx-auto p-4">
+        <div id="tab-input" class="tab-content">
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <h3 class="font-bold mb-4"><i class="fa fa-edit mr-2 text-purple-600"></i>外包需求</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div><label class="block text-sm text-gray-600 mb-1">需求类型</label><select id="needType" onchange="analyze()" class="w-full border rounded p-2"><option value="design">设计/美工</option><option value="dev">技术开发</option><option value="content">内容创作</option><option value="marketing">营销推广</option><option value="operation">运营支持</option><option value="video">视频制作</option><option value="other">其他</option></select></div>
+                    <div><label class="block text-sm text-gray-600 mb-1">项目周期</label><select id="duration" onchange="analyze()" class="w-full border rounded p-2"><option value="1">1周内</option><option value="2">2周</option><option value="4">1个月</option><option value="12">1-3个月</option><option value="52">3个月以上</option></select></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div><label class="block text-sm text-gray-600 mb-1">预算范围 (¥)</label><select id="budget" onchange="analyze()" class="w-full border rounded p-2"><option value="1000">1000以下</option><option value="5000">1000-5000</option><option value="20000">5000-20000</option><option value="50000">2万-5万</option><option value="100000">5万-10万</option><option value="500000">10万以上</option></select></div>
+                    <div><label class="block text-sm text-gray-600 mb-1">质量要求</label><select id="quality" onchange="analyze()" class="w-full border rounded p-2"><option value="basic">基础可用</option><option value="standard">标准品质</option><option value="premium">精品要求</option><option value="expert">专家级</option></select></div>
+                </div>
+                <div class="mb-4"><label class="block text-sm text-gray-600 mb-1">需求描述</label><textarea id="description" rows="3" class="w-full border rounded p-2" placeholder="简述项目需求..."></textarea></div>
+                <button onclick="analyze(); showTab('match')" class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700"><i class="fa fa-search mr-2"></i>开始匹配</button>
+            </div>
+        </div>
+
+        <div id="tab-match" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <h3 class="font-bold mb-4"><i class="fa fa-users mr-2 text-purple-600"></i>推荐合作者类型</h3>
+                <div id="recommendations" class="space-y-4"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <h3 class="font-bold mb-4"><i class="fa fa-bar-chart mr-2 text-purple-600"></i>匹配算法可视化</h3>
+                <div id="matchVisualization" class="space-y-4"></div>
+            </div>
+            <div class="flex gap-2 mb-4">
+                <button onclick="exportMatchReport()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700"><i class="fa fa-download mr-1"></i> 导出匹配报告</button>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="font-bold mb-4"><i class="fa fa-check-square mr-2 text-purple-600"></i>筛选清单</h3>
+                <div id="checklist" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <div id="tab-experts" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <h3 class="font-bold mb-4"><i class="fa fa-user-md mr-2 text-purple-600"></i>专家数据库</h3>
+                <p class="text-sm text-gray-500 mb-4">点击专家卡片查看详细资料和项目经验。</p>
+                <div id="expertList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+
+        <div id="tab-templates" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <h3 class="font-bold mb-4"><i class="fa fa-file-text mr-2 text-purple-600"></i>合同要点模板</h3>
+                <div id="contractTemplate" class="prose prose-sm max-w-none bg-gray-50 p-4 rounded"></div>
+                <button onclick="copyTemplate('contract')" class="mt-3 bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700"><i class="fa fa-copy mr-1"></i>复制</button>
+            </div>
+            <div class="bg-white rounded-xl shadow p-6">
+                <h3 class="font-bold mb-4"><i class="fa fa-comment mr-2 text-purple-600"></i>沟通模板</h3>
+                <div id="commTemplate" class="prose prose-sm max-w-none bg-gray-50 p-4 rounded"></div>
+                <button onclick="copyTemplate('comm')" class="mt-3 bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700"><i class="fa fa-copy mr-1"></i>复制</button>
+            </div>
+        </div>
+
+        <div id="tab-history" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold"><i class="fa fa-clock-o mr-2 text-purple-600"></i>匹配历史</h3>
+                    <button onclick="clearMatchHistory()" class="text-sm px-3 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"><i class="fa fa-trash"></i> 清空历史</button>
+                </div>
+                <div id="matchHistoryList" class="space-y-2"></div>
+            </div>
+        </div>
+
+        <!-- 评价反馈 Tab -->
+        <div id="tab-feedback" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <h3 class="font-bold mb-4"><i class="fa fa-star mr-2 text-yellow-500"></i>合作评价与反馈</h3>
+                <p class="text-sm text-gray-500 mb-4">记录合作后的评价，帮助优化后续匹配推荐。</p>
+                <div id="feedbackForm" class="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+                    <h4 class="font-medium text-gray-700 mb-3"><i class="fa fa-pencil-square-o mr-1"></i>添加评价</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">合作对象</label>
+                            <select id="feedbackPartner" class="w-full border rounded p-2 text-sm">
+                                <option value="自由职业者">自由职业者</option>
+                                <option value="小团队/工作室">小团队/工作室</option>
+                                <option value="专业机构">专业机构</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">需求类型</label>
+                            <select id="feedbackType" class="w-full border rounded p-2 text-sm">
+                                <option value="design">设计/美工</option>
+                                <option value="dev">技术开发</option>
+                                <option value="content">内容创作</option>
+                                <option value="marketing">营销推广</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs text-gray-500 mb-1">综合评分</label>
+                        <div class="flex items-center gap-1 text-2xl" id="starRating">
+                            <span class="star cursor-pointer text-gray-300" data-value="1">&#9733;</span>
+                            <span class="star cursor-pointer text-gray-300" data-value="2">&#9733;</span>
+                            <span class="star cursor-pointer text-gray-300" data-value="3">&#9733;</span>
+                            <span class="star cursor-pointer text-gray-300" data-value="4">&#9733;</span>
+                            <span class="star cursor-pointer text-gray-300" data-value="5">&#9733;</span>
+                            <span class="text-sm text-gray-500 ml-2" id="ratingLabel">请评分</span>
+                        </div>
+                        <input type="hidden" id="feedbackRating" value="0">
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+                        <label class="text-xs text-gray-500">沟通顺畅</label>
+                        <input type="range" id="fbComm" min="1" max="5" value="4" class="w-full" oninput="document.getElementById('fbCommVal').textContent=this.value">
+                        <span id="fbCommVal" class="text-xs font-medium text-gray-600">4</span>
+                        <label class="text-xs text-gray-500">交付质量</label>
+                        <input type="range" id="fbQuality" min="1" max="5" value="4" class="w-full" oninput="document.getElementById('fbQualityVal').textContent=this.value">
+                        <span id="fbQualityVal" class="text-xs font-medium text-gray-600">4</span>
+                        <label class="text-xs text-gray-500">准时程度</label>
+                        <input type="range" id="fbTime" min="1" max="5" value="4" class="w-full" oninput="document.getElementById('fbTimeVal').textContent=this.value">
+                        <span id="fbTimeVal" class="text-xs font-medium text-gray-600">4</span>
+                        <label class="text-xs text-gray-500">性价比</label>
+                        <input type="range" id="fbValue" min="1" max="5" value="4" class="w-full" oninput="document.getElementById('fbValueVal').textContent=this.value">
+                        <span id="fbValueVal" class="text-xs font-medium text-gray-600">4</span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-xs text-gray-500 mb-1">评价详情</label>
+                        <textarea id="feedbackDetail" rows="3" class="w-full border rounded p-2 text-sm" placeholder="描述合作体验、优点和需要改进的地方..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                            <input type="checkbox" id="fbRecommend" checked>
+                            <i class="fa fa-thumbs-up text-green-500"></i> 推荐给其他人
+                        </label>
+                    </div>
+                    <button onclick="submitFeedback()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-5 py-2 rounded-lg text-sm transition">
+                        <i class="fa fa-save mr-1"></i> 提交评价
+                    </button>
+                </div>
+
+                <h4 class="font-bold text-gray-700 mb-3"><i class="fa fa-list mr-1"></i>已有评价</h4>
+                <div id="feedbackList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+                <button onclick="clearFeedbacks()" class="mt-3 text-sm px-3 py-1.5 bg-red-100 text-red-600 rounded hover:bg-red-200 transition"><i class="fa fa-trash mr-1"></i> 清空所有评价</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 专家详情弹窗 -->
+    <div id="expertModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onclick="closeExpertModal(event)">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-800" id="modalExpertName">专家详情</h3>
+                    <button onclick="closeExpertModal()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <div id="modalExpertContent" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ====== 5个虚拟专家档案（增强版） ======
+        const EXPERTS = [
+            { id: 'exp1', name: '张明远', title: '全栈开发者', avatar: 'fa-user-circle', tags: ['React', 'Node.js', 'Python', 'AWS', 'Docker'], skill: 9, value: 8, resource: 6, exp: 7, desc: '8年全栈开发经验，曾在字节跳动任高级工程师，擅长Web应用和API开发。', rate: '500-800/天', projects: 42,
+              detail: '<p class="text-sm text-gray-600"><strong>核心技能：</strong>React/Next.js 前端架构、Node.js/Python 后端开发、AWS 云服务部署、Docker/K8s 容器化、数据库设计（MySQL/PostgreSQL/MongoDB）</p><div class="mt-3 text-sm text-gray-600"><strong>代表性项目：</strong><ul class="list-disc list-inside mt-1 space-y-1"><li>某电商平台后台管理系统（React+Node.js，日活10万+）</li><li>金融风控数据分析平台（Python+FastAPI，处理百万级交易数据）</li><li>企业内部IM工具全栈开发（WebSocket+RTC）</li></ul></div><div class="mt-3 text-sm text-gray-600"><strong>工作经历：</strong>字节跳动高级工程师（4年）→ 自由职业（3年）→ 技术合伙人（1年）</div><div class="mt-3 text-sm text-gray-600"><strong>可合作模式：</strong>整包开发、技术咨询、代码审查、技术方案设计</div>' },
+            { id: 'exp2', name: '李思涵', title: 'UI/UX设计师', avatar: 'fa-user-circle', tags: ['Figma', 'Sketch', '动效设计', '设计系统', '用户研究'], skill: 9, value: 7, resource: 5, exp: 6, desc: '6年产品设计经验，前阿里设计团队成员，专注B端产品和企业级应用设计。', rate: '400-700/天', projects: 68,
+              detail: '<p class="text-sm text-gray-600"><strong>核心技能：</strong>Figma/Sketch 原型设计、设计系统搭建、用户研究/可用性测试、动效设计（After Effects）、交互原型（Prototype）</p><div class="mt-3 text-sm text-gray-600"><strong>代表性项目：</strong><ul class="list-disc list-inside mt-1 space-y-1"><li>某SaaS平台设计系统搭建（300+组件）</li><li>金融App改版设计（用户满意度提升35%）</li><li>企业数据可视化大屏设计（多端适配）</li></ul></div><div class="mt-3 text-sm text-gray-600"><strong>工作经历：</strong>阿里设计团队成员（3年）→ 设计咨询（2年）→ 独立设计师（1年）</div><div class="mt-3 text-sm text-gray-600"><strong>可合作模式：</strong>UI设计、设计系统搭建、用户研究、设计评审</div>' },
+            { id: 'exp3', name: '王晓峰', title: '内容营销专家', avatar: 'fa-user-circle', tags: ['文案策划', 'SEO', '社交媒体', '内容策略', '数据分析'], skill: 8, value: 9, resource: 7, exp: 5, desc: '5年内容营销经验，操盘过3个百万粉丝账号，擅长从0到1的内容体系建设。', rate: '300-600/天', projects: 120,
+              detail: '<p class="text-sm text-gray-600"><strong>核心技能：</strong>内容策略规划、SEO优化（站内+站外）、社交媒体运营（抖音/小红书/公众号）、数据分析（Google Analytics/百度统计）、A/B测试</p><div class="mt-3 text-sm text-gray-600"><strong>代表性项目：</strong><ul class="list-disc list-inside mt-1 space-y-1"><li>某教育品牌抖音账号从0到100万粉丝（6个月）</li><li>企业博客SEO优化，自然流量增长300%</li><li>多平台内容矩阵搭建（月均触达500万+用户）</li></ul></div><div class="mt-3 text-sm text-gray-600"><strong>工作经历：</strong>某MCN机构内容总监（3年）→ 独立内容顾问（2年）</div><div class="mt-3 text-sm text-gray-600"><strong>可合作模式：</strong>内容代运营、SEO咨询、文案外包、增长策略</div>' },
+            { id: 'exp4', name: '陈雨桐', title: '短视频编导', avatar: 'fa-user-circle', tags: ['视频拍摄', '剪映', '脚本创作', '直播策划', '数据分析'], skill: 7, value: 8, resource: 8, exp: 4, desc: '4年短视频经验，曾打造多条千万播放爆款视频，擅长剧情类和知识类内容。', rate: '400-800/天', projects: 200,
+              detail: '<p class="text-sm text-gray-600"><strong>核心技能：</strong>短视频脚本创作、拍摄/灯光/收音、剪辑（PR/剪映/FCP）、直播策划与执行、数据复盘与优化</p><div class="mt-3 text-sm text-gray-600"><strong>代表性项目：</strong><ul class="list-disc list-inside mt-1 space-y-1"><li>知识科普短视频系列（最高单条播放1200万）</li><li>品牌定制短视频广告（转化率提升45%）</li><li>电商直播整场策划（单场GMV 50万+）</li></ul></div><div class="mt-3 text-sm text-gray-600"><strong>工作经历：</strong>短视频编导（2年）→ 内容合伙人（2年）</div><div class="mt-3 text-sm text-gray-600"><strong>可合作模式：</strong>短视频代运营、脚本定制、拍摄制作、直播策划</div>' },
+            { id: 'exp5', name: '刘振宇', title: '数据分析师', avatar: 'fa-user-circle', tags: ['SQL', 'Tableau', 'Python', '机器学习', 'A/B测试'], skill: 8, value: 6, resource: 9, exp: 5, desc: '5年数据分析经验，曾为多家500强企业提供数据策略咨询，精通商业分析。', rate: '600-1000/天', projects: 35,
+              detail: '<p class="text-sm text-gray-600"><strong>核心技能：</strong>SQL复杂查询与优化、Python数据分析（Pandas/NumPy）、Tableau/PowerBI 可视化、A/B测试设计、机器学习建模（Scikit-learn）</p><div class="mt-3 text-sm text-gray-600"><strong>代表性项目：</strong><ul class="list-disc list-inside mt-1 space-y-1"><li>某零售企业销售预测模型（准确率92%）</li><li>用户行为分析平台搭建（日处理千万级事件）</li><li>A/B测试框架设计与分析（提升转化率15%）</li></ul></div><div class="mt-3 text-sm text-gray-600"><strong>工作经历：</strong>某咨询公司数据分析师（3年）→ 独立数据顾问（2年）</div><div class="mt-3 text-sm text-gray-600"><strong>可合作模式：</strong>数据分析项目、数据看板搭建、A/B测试咨询、模型开发</div>' }
+        ];
+
+        const PARTNERS = {
+            freelancer: { name: '自由职业者', icon: 'fa-user', color: 'blue', pros: ['价格灵活', '沟通直接', '适合小项目'], cons: ['时间不稳定', '技能单一', '无售后保障'], match: { low: 3, mid: 5, high: 4 } },
+            smallTeam: { name: '小团队/工作室', icon: 'fa-users', color: 'green', pros: ['技能互补', '响应快', '性价比高'], cons: ['规模有限', '高峰期可能延期'], match: { low: 2, mid: 5, high: 4 } },
+            agency: { name: '专业机构', icon: 'fa-building', color: 'purple', pros: ['专业度高', '流程完善', '售后有保障'], cons: ['价格较高', '沟通环节多', '大公司排期'], match: { low: 1, mid: 3, high: 5 } }
+        };
+        const TYPE_KEYWORDS = { design: '设计', dev: '开发', content: '内容', marketing: '营销', operation: '运营', video: '视频', other: '项目' };
+
+        let currentMatchResults = [];
+
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn px-3 py-1 rounded hover:bg-purple-500');
+            const tabEl = document.getElementById('tab-' + name);
+            if (tabEl) tabEl.classList.remove('hidden');
+            if (name === 'match' && currentMatchResults.length === 0) analyze();
+            if (name === 'templates') renderTemplates();
+            if (name === 'experts') renderExperts();
+            if (name === 'history') renderMatchHistory();
+            if (name === 'feedback') renderFeedbacks();
+        }
+
+        function renderExperts() {
+            const container = document.getElementById('expertList');
+            const colors = ['bg-blue-50 border-blue-200', 'bg-green-50 border-green-200', 'bg-amber-50 border-amber-200', 'bg-pink-50 border-pink-200', 'bg-indigo-50 border-indigo-200'];
+            container.innerHTML = EXPERTS.map((e, i) =>
+                '<div class="p-4 rounded-xl border ' + colors[i % colors.length] + ' hover:shadow-md transition cursor-pointer" onclick="showExpertDetail(\'' + e.id + '\')">' +
+                '<div class="flex items-center gap-3 mb-3">' +
+                '<i class="fa ' + e.avatar + ' text-3xl text-purple-600"></i>' +
+                '<div><div class="font-bold text-gray-800">' + e.name + '</div><div class="text-sm text-gray-500">' + e.title + '</div></div></div>' +
+                '<div class="flex flex-wrap gap-1 mb-2">' + e.tags.map(t => '<span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded">' + t + '</span>').join('') + '</div>' +
+                '<p class="text-sm text-gray-600 mb-2">' + e.desc + '</p>' +
+                '<div class="flex justify-between text-xs text-gray-500"><span>累计项目 ' + e.projects + ' 个</span><span>报价 ' + e.rate + '</span></div>' +
+                '<div class="flex gap-2 mt-2 text-xs">' +
+                '<span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">技能 ' + e.skill + '/10</span>' +
+                '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded">价值观 ' + e.value + '/10</span>' +
+                '<span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded">资源 ' + e.resource + '/10</span></div>' +
+                '<div class="mt-2 text-center"><button onclick="event.stopPropagation(); showExpertDetail(\'' + e.id + '\')" class="text-xs text-purple-600 hover:text-purple-800"><i class="fa fa-info-circle mr-1"></i>查看详情</button></div></div>'
+            ).join('');
+        }
+
+        // ====== 专家详情弹窗 ======
+        function showExpertDetail(id) {
+            const expert = EXPERTS.find(e => e.id === id);
+            if (!expert) return;
+            document.getElementById('modalExpertName').textContent = expert.name + ' - ' + expert.title;
+            document.getElementById('modalExpertContent').innerHTML =
+                '<div class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">' +
+                '<i class="fa ' + expert.avatar + ' text-4xl text-purple-600"></i>' +
+                '<div><div class="font-bold text-gray-800 text-lg">' + expert.name + '</div><div class="text-sm text-gray-500">' + expert.title + '</div></div></div>' +
+                '<div class="flex flex-wrap gap-1">' + expert.tags.map(t => '<span class="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded">' + t + '</span>').join('') + '</div>' +
+                '<div class="flex gap-3 text-xs">' +
+                '<span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">技能 ' + expert.skill + '/10</span>' +
+                '<span class="px-2 py-0.5 bg-green-100 text-green-700 rounded">价值观 ' + expert.value + '/10</span>' +
+                '<span class="px-2 py-0.5 bg-amber-100 text-amber-700 rounded">资源 ' + expert.resource + '/10</span>' +
+                '<span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded">经验 ' + expert.exp + '/10</span></div>' +
+                '<div class="text-sm text-gray-600 bg-gray-50 rounded-lg p-3">' + expert.detail + '</div>' +
+                '<div class="grid grid-cols-2 gap-3 text-sm">' +
+                '<div class="bg-blue-50 rounded p-3 text-center"><div class="text-lg font-bold text-blue-600">' + expert.projects + '</div><div class="text-xs text-gray-500">累计项目</div></div>' +
+                '<div class="bg-green-50 rounded p-3 text-center"><div class="text-lg font-bold text-green-600">' + expert.rate + '</div><div class="text-xs text-gray-500">报价范围</div></div></div>' +
+                '<button onclick="closeExpertModal()" class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 text-sm transition"><i class="fa fa-check mr-1"></i> 了解</button>';
+            document.getElementById('expertModal').classList.remove('hidden');
+        }
+
+        function closeExpertModal(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById('expertModal').classList.add('hidden');
+        }
+
+        // ====== 匹配分析 ======
+        function analyze() {
+            const type = document.getElementById('needType').value;
+            const duration = parseInt(document.getElementById('duration').value);
+            const budget = parseInt(document.getElementById('budget').value);
+            const quality = document.getElementById('quality').value;
+            let budgetLevel = budget <= 5000 ? 'low' : budget >= 50000 ? 'high' : 'mid';
+            let qualityWeight = quality === 'basic' ? 0.5 : quality === 'expert' ? 1.5 : 1;
+            let durationWeight = duration >= 12 ? 1.2 : duration <= 2 ? 0.8 : 1;
+            const typeDistance = {
+                'design': { 'design': 0.3, 'dev': 0.5, 'content': 0.7, 'marketing': 0.8, 'operation': 0.7, 'video': 0.6, 'other': 0.5 },
+                'dev': { 'design': 0.5, 'dev': 0.3, 'content': 0.6, 'marketing': 0.7, 'operation': 0.7, 'video': 0.8, 'other': 0.5 },
+                'content': { 'design': 0.7, 'dev': 0.6, 'content': 0.3, 'marketing': 0.5, 'operation': 0.5, 'video': 0.6, 'other': 0.5 },
+                'marketing': { 'design': 0.8, 'dev': 0.7, 'content': 0.5, 'marketing': 0.3, 'operation': 0.5, 'video': 0.6, 'other': 0.5 },
+                'operation': { 'design': 0.7, 'dev': 0.7, 'content': 0.5, 'marketing': 0.5, 'operation': 0.3, 'video': 0.6, 'other': 0.5 },
+                'video': { 'design': 0.6, 'dev': 0.8, 'content': 0.6, 'marketing': 0.6, 'operation': 0.6, 'video': 0.3, 'other': 0.5 },
+                'other': { 'design': 0.5, 'dev': 0.5, 'content': 0.5, 'marketing': 0.5, 'operation': 0.5, 'video': 0.5, 'other': 0.3 }
+            };
+            const partnerFields = { 'freelancer': 'dev', 'smallTeam': 'design', 'agency': 'marketing' };
+
+            // 获取反馈评分影响
+            const feedbacks = getFeedbacks();
+            const partnerAvgScores = {};
+            feedbacks.forEach(f => {
+                if (!partnerAvgScores[f.partner]) partnerAvgScores[f.partner] = { total: 0, count: 0 };
+                partnerAvgScores[f.partner].total += f.rating;
+                partnerAvgScores[f.partner].count++;
+            });
+
+            const results = Object.entries(PARTNERS).map(([id, p]) => {
+                const baseSkillScore = p.match[budgetLevel] * 2;
+                let skillScore = baseSkillScore + (p.name === '自由职业者' && duration <= 4 ? 2 : 0) + (p.name === '专业机构' && quality === 'expert' ? 2 : 0) + (p.name === '小团队/工作室' && budgetLevel === 'mid' ? 1 : 0);
+                const valueScore = (p.name === '自由职业者' ? 7 : p.name === '小团队/工作室' ? 6 : 8);
+                const resourceScore = (p.name === '自由职业者' ? 5 : p.name === '小团队/工作室' ? 7 : 9);
+                const partnerField = partnerFields[id] || 'other';
+                const complementarity = typeDistance[type] ? typeDistance[type][partnerField] || 0.5 : 0.5;
+
+                // 反馈评分加成
+                let feedbackBonus = 0;
+                if (partnerAvgScores[p.name]) {
+                    feedbackBonus = (partnerAvgScores[p.name].total / partnerAvgScores[p.name].count) * 2;
+                }
+
+                let finalScore = (skillScore * 0.3 + valueScore * 0.25 + resourceScore * 0.2 + complementarity * 0.25) * 10;
+                finalScore = finalScore * qualityWeight * durationWeight + feedbackBonus;
+                return {
+                    id, ...p,
+                    score: finalScore,
+                    skillScore: Math.min(100, Math.round(skillScore * 10)),
+                    valueScore: Math.min(100, Math.round(valueScore * 10)),
+                    resourceScore: Math.min(100, Math.round(resourceScore * 10)),
+                    complementarity: Math.round(complementarity * 100),
+                    feedbackBonus: Math.round(feedbackBonus)
+                };
+            }).sort((a, b) => b.score - a.score);
+
+            currentMatchResults = results;
+            const recDiv = document.getElementById('recommendations');
+            const colors = { blue: 'bg-blue-100 border-blue-500 text-blue-700', green: 'bg-green-100 border-green-500 text-green-700', purple: 'bg-purple-100 border-purple-500 text-purple-700' };
+            recDiv.innerHTML = results.map((r, i) => '<div class="p-4 rounded-lg border-l-4 ' + colors[r.color] + '">' +
+                '<div class="flex items-center gap-3 mb-2"><span class="text-2xl">' + (i === 0 ? '&#129351;' : i === 1 ? '&#129352;' : '&#129353;') + '</span><i class="fa ' + r.icon + ' text-2xl"></i><span class="text-xl font-bold">' + r.name + '</span><span class="text-sm bg-white px-2 py-1 rounded">匹配度: ' + Math.min(99, Math.round(r.score)) + '%</span>' +
+                (r.feedbackBonus > 0 ? '<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded"><i class="fa fa-star"></i> 反馈加成 +' + r.feedbackBonus + '</span>' : '') + '</div>' +
+                '<div class="grid grid-cols-2 gap-4 text-sm"><div><div class="font-medium mb-1">优势</div><ul class="list-disc list-inside text-gray-600">' + r.pros.map(p => '<li>' + p + '</li>').join('') + '</ul></div><div><div class="font-medium mb-1">注意</div><ul class="list-disc list-inside text-gray-600">' + r.cons.map(c => '<li>' + c + '</li>').join('') + '</ul></div></div>' +
+                '<div class="mt-2 pt-2 border-t border-dashed border-gray-200 grid grid-cols-4 gap-2 text-xs">' +
+                '<div class="text-center"><div class="text-gray-400">技能</div><div class="font-bold text-blue-600">' + r.skillScore + '</div></div>' +
+                '<div class="text-center"><div class="text-gray-400">价值观</div><div class="font-bold text-green-600">' + r.valueScore + '</div></div>' +
+                '<div class="text-center"><div class="text-gray-400">资源</div><div class="font-bold text-amber-600">' + r.resourceScore + '</div></div>' +
+                '<div class="text-center"><div class="text-gray-400">互补度</div><div class="font-bold text-purple-600">' + r.complementarity + '</div></div></div></div>'
+            ).join('');
+
+            const visDiv = document.getElementById('matchVisualization');
+            const dims = [
+                { name: '技能匹配', key: 'skillScore', weight: '权重30%', color: 'bg-blue-500' },
+                { name: '价值观匹配', key: 'valueScore', weight: '权重25%', color: 'bg-green-500' },
+                { name: '资源匹配', key: 'resourceScore', weight: '权重20%', color: 'bg-amber-500' },
+                { name: '领域互补度', key: 'complementarity', weight: '权重25%', color: 'bg-purple-500' }
+            ];
+            visDiv.innerHTML = dims.map(dim =>
+                '<div><div class="flex justify-between text-sm mb-1"><span class="font-medium">' + dim.name + '</span><span class="text-gray-400">' + dim.weight + '</span></div>' +
+                results.map(s => '<div class="flex items-center gap-2 mb-1"><span class="text-xs w-20 text-right">' + s.name + '</span><div class="flex-1 bg-gray-100 rounded h-5"><div class="' + dim.color + ' rounded h-5 transition-all duration-500" style="width:' + Math.max(3, s[dim.key]) + '%"></div></div><span class="text-xs w-8 font-medium">' + s[dim.key] + '%</span></div>').join('') + '</div>'
+            ).join('');
+
+            const checkItems = {
+                freelancer: ['查看作品集/案例', '确认可用时间段', '明确交付标准和节点', '约定修改次数上限', '预付款比例(建议30-50%)', '沟通响应时间要求'],
+                smallTeam: ['团队人员配置', '过往合作案例', '项目流程和时间节点', '修改和售后条款', '付款方式和节点', '紧急情况处理预案'],
+                agency: ['公司资质和案例', '项目负责人对接', '详细合同条款', '知识产权归属', '保密协议', '验收标准和违约责任']
+            };
+            const checkDiv = document.getElementById('checklist');
+            const primary = results[0].id;
+            checkDiv.innerHTML = '<div class="font-medium mb-2 text-gray-700">重点核对 (' + results[0].name + ')</div>' + checkItems[primary].map((item, i) => '<label class="flex items-center gap-2 p-2 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"><input type="checkbox" id="check-' + i + '" class="w-4 h-4"><span>' + item + '</span></label>').join('');
+            saveMatchHistory(results);
+        }
+
+        // ====== 匹配历史 ======
+        function saveMatchHistory(results) {
+            const type = document.getElementById('needType').value;
+            const budget = document.getElementById('budget').value;
+            const desc = document.getElementById('description').value || '未填写描述';
+            const history = JSON.parse(localStorage.getItem('matchHistory') || '[]');
+            history.unshift({ time: new Date().toLocaleString('zh-CN', { hour12: false }), type: TYPE_KEYWORDS[type], budget: budget, desc: desc.substring(0, 50), topMatch: results[0]?.name || '', topScore: results[0] ? Math.min(99, Math.round(results[0].score)) + '%' : '0%' });
+            if (history.length > 30) history.length = 30;
+            localStorage.setItem('matchHistory', JSON.stringify(history));
+        }
+
+        function renderMatchHistory() {
+            const list = document.getElementById('matchHistoryList');
+            const history = JSON.parse(localStorage.getItem('matchHistory') || '[]');
+            if (history.length === 0) { list.innerHTML = '<div class="text-center text-gray-400 py-8"><i class="fa fa-inbox text-3xl block mb-2"></i>暂无匹配历史</div>'; return; }
+            list.innerHTML = history.map(h => '<div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"><div class="flex-1"><div class="text-sm font-medium">' + (h.type || '匹配') + ' | 预算¥' + (h.budget || '0') + '</div><div class="text-xs text-gray-400">' + h.time + ' | ' + h.desc + '</div></div><div class="text-right"><div class="text-sm font-bold text-purple-600">' + h.topMatch + '</div><div class="text-xs text-green-600">匹配度 ' + h.topScore + '</div></div></div>').join('');
+        }
+
+        function clearMatchHistory() { if (confirm('确定清空所有匹配历史？')) { localStorage.removeItem('matchHistory'); renderMatchHistory(); } }
+
+        // ====== 评价反馈系统 ======
+        let currentRating = 0;
+
+        function getFeedbacks() { return JSON.parse(localStorage.getItem('cooperationFeedbacks') || '[]'); }
+        function saveFeedbacks(f) { localStorage.setItem('cooperationFeedbacks', JSON.stringify(f)); }
+
+        function initStarRating() {
+            document.querySelectorAll('.star').forEach(el => {
+                el.addEventListener('click', function() {
+                    currentRating = parseInt(this.dataset.value);
+                    document.getElementById('feedbackRating').value = currentRating;
+                    updateStars(currentRating);
+                });
+                el.addEventListener('mouseenter', function() {
+                    const val = parseInt(this.dataset.value);
+                    updateStars(val);
+                });
+            });
+            document.getElementById('starRating').addEventListener('mouseleave', function() {
+                updateStars(currentRating);
+            });
+        }
+
+        function updateStars(val) {
+            document.querySelectorAll('.star').forEach(el => {
+                const starVal = parseInt(el.dataset.value);
+                el.className = 'star cursor-pointer ' + (starVal <= val ? 'text-yellow-400' : 'text-gray-300');
+            });
+            const labels = ['', '很差', '较差', '一般', '良好', '优秀'];
+            document.getElementById('ratingLabel').textContent = labels[val] || '请评分';
+        }
+
+        function submitFeedback() {
+            const partner = document.getElementById('feedbackPartner').value;
+            const type = document.getElementById('feedbackType').value;
+            const rating = currentRating;
+            if (rating === 0) { showToast('请先评分'); return; }
+            const detail = document.getElementById('feedbackDetail').value.trim() || '未填写详情';
+            const recommend = document.getElementById('fbRecommend').checked;
+            const scores = {
+                comm: parseInt(document.getElementById('fbComm').value),
+                quality: parseInt(document.getElementById('fbQuality').value),
+                time: parseInt(document.getElementById('fbTime').value),
+                value: parseInt(document.getElementById('fbValue').value)
+            };
+            const feedbacks = getFeedbacks();
+            feedbacks.unshift({
+                id: Date.now(),
+                partner: partner,
+                type: TYPE_KEYWORDS[type] || type,
+                rating: rating,
+                detail: detail,
+                recommend: recommend,
+                scores: scores,
+                date: new Date().toLocaleString('zh-CN', { hour12: false })
+            });
+            if (feedbacks.length > 50) feedbacks.length = 50;
+            saveFeedbacks(feedbacks);
+            renderFeedbacks();
+            showToast('评价已提交，感谢反馈！');
+            // 重置表单
+            currentRating = 0;
+            updateStars(0);
+            document.getElementById('feedbackDetail').value = '';
+            document.getElementById('fbComm').value = 4;
+            document.getElementById('fbQuality').value = 4;
+            document.getElementById('fbTime').value = 4;
+            document.getElementById('fbValue').value = 4;
+            ['fbCommVal', 'fbQualityVal', 'fbTimeVal', 'fbValueVal'].forEach(id => document.getElementById(id).textContent = '4');
+        }
+
+        function renderFeedbacks() {
+            const list = document.getElementById('feedbackList');
+            const feedbacks = getFeedbacks();
+            if (feedbacks.length === 0) { list.innerHTML = '<div class="text-center text-gray-400 py-6"><i class="fa fa-inbox text-3xl block mb-2"></i><p class="text-sm">暂无评价记录</p></div>'; return; }
+            list.innerHTML = feedbacks.map(f => {
+                const stars = '&#9733;'.repeat(f.rating) + '&#9734;'.repeat(5 - f.rating);
+                const sc = f.scores || {};
+                return '<div class="p-3 bg-gray-50 rounded-lg border border-gray-200">' +
+                    '<div class="flex items-center justify-between mb-1">' +
+                    '<div class="flex items-center gap-2"><span class="font-medium text-gray-700">' + f.partner + '</span><span class="text-xs bg-gray-200 px-1.5 py-0.5 rounded">' + f.type + '</span></div>' +
+                    '<span class="text-yellow-500 text-sm">' + stars + '</span></div>' +
+                    '<div class="text-xs text-gray-400 mb-1">' + f.date + (f.recommend ? ' | <span class="text-green-500"><i class="fa fa-thumbs-up"></i> 推荐</span>' : '') + '</div>' +
+                    '<p class="text-sm text-gray-600 mb-2">' + f.detail + '</p>' +
+                    '<div class="flex gap-2 text-xs text-gray-400"><span>沟通' + (sc.comm || '-') + '</span><span>质量' + (sc.quality || '-') + '</span><span>准时' + (sc.time || '-') + '</span><span>性价比' + (sc.value || '-') + '</span></div></div>';
+            }).join('');
+        }
+
+        function clearFeedbacks() { if (confirm('确定清空所有评价？')) { localStorage.removeItem('cooperationFeedbacks'); renderFeedbacks(); } }
+
+        // ====== 导出 ======
+        function exportMatchReport() {
+            const type = document.getElementById('needType').value;
+            const budget = document.getElementById('budget').value;
+            const desc = document.getElementById('description').value || '未填写';
+            const duration = document.getElementById('duration').value;
+            const quality = document.getElementById('quality').value;
+            let report = '# 合作匹配分析报告\n\n**生成时间**：' + new Date().toLocaleString('zh-CN', { hour12: false }) + '\n\n## 需求概要\n- 需求类型：' + TYPE_KEYWORDS[type] + '\n- 预算范围：¥' + budget + '\n- 项目周期：' + duration + '周\n- 质量要求：' + quality + '\n- 需求描述：' + desc + '\n\n## 匹配结果\n\n';
+            currentMatchResults.forEach((r, i) => {
+                const score = Math.min(99, Math.round(r.score));
+                report += '### ' + (i + 1) + '. ' + r.name + '（匹配度 ' + score + '%）\n- **技能匹配**：' + r.skillScore + '分\n- **价值观匹配**：' + r.valueScore + '分\n- **资源匹配**：' + r.resourceScore + '分\n- **领域互补度**：' + r.complementarity + '%\n**优势**：' + r.pros.join('、') + '\n**注意事项**：' + r.cons.join('、') + '\n\n';
+            });
+            report += '## 合作建议\n1. 优先选择匹配度最高的合作方进行初步沟通\n2. 在签订合同前仔细核对筛选清单中的各项要点\n3. 建议先进行小规模试合作，验证双方的沟通和执行力\n4. 明确里程碑节点和交付标准，降低合作风险\n\n---\n由合作匹配器自动生成';
+            const blob = new Blob([report], { type: 'text/markdown;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = '合作匹配报告_' + new Date().toISOString().slice(0, 10) + '.md';
+            a.click();
+        }
+
+        function renderTemplates() {
+            const type = document.getElementById('needType').value;
+            const budget = document.getElementById('budget').value;
+            const desc = document.getElementById('description').value || '【填写需求描述】';
+            const kw = TYPE_KEYWORDS[type];
+            document.getElementById('contractTemplate').innerHTML = '<h4 class="font-bold mb-2">合同要点清单</h4><ol class="list-decimal list-inside space-y-1"><li><strong>项目范围</strong>：明确' + kw + '需求、交付物清单、验收标准</li><li><strong>时间节点</strong>：启动日期、里程碑节点、最终交付日期</li><li><strong>费用及支付</strong>：总费用¥' + budget + '、支付节点(如3-3-4)、开票信息</li><li><strong>修改条款</strong>：免费修改次数、超出后计费标准</li><li><strong>知识产权</strong>：成果归属、使用权、保密条款</li><li><strong>违约责任</strong>：延期赔付、质量不达标的处理</li><li><strong>其他</strong>：不可抗力、争议解决方式</li></ol>';
+            document.getElementById('commTemplate').innerHTML = '<h4 class="font-bold mb-2">首次沟通模板</h4><div class="bg-white p-3 rounded border"><p>您好，我们有一个' + kw + '项目想咨询：</p><p class="mt-2"><strong>需求概要</strong>：' + desc + '</p><p class="mt-2"><strong>预算范围</strong>：' + budget + '</p><p class="mt-2"><strong>期望周期</strong>：' + document.getElementById('duration').value + '周</p><p class="mt-2">请问您这边：</p><ol class="list-decimal list-inside mt-1"><li>是否有相关经验/案例？</li><li>近期档期如何？</li><li>预估报价范围？</li></ol><p class="mt-2">期待您的回复，谢谢！</p></div>';
+        }
+
+        function copyTemplate(type) {
+            const text = type === 'contract' ? document.getElementById('contractTemplate').innerText : document.getElementById('commTemplate').innerText;
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                document.execCommand('copy');
+                showToast('已复制到剪贴板');
+            } catch(e) {
+                showToast('复制失败，请手动选择复制');
+            }
+            document.body.removeChild(ta);
+        }
+
+        function showToast(msg) {
+            const existing = document.querySelector('.toast-notice');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast-notice fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-5 py-3 rounded-lg shadow-lg text-sm z-50 transition-all duration-300';
+            toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, 20px)';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            requestAnimationFrame(function() { toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, 0)'; });
+            setTimeout(function() { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, 20px)'; setTimeout(function() { toast.remove(); }, 300); }, 2000);
+        }
+
+        initStarRating();
+        renderExperts();
+        analyze();
+    </script>
+</body>
+</html>
